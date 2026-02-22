@@ -1,0 +1,4 @@
+-------------------------------------------------------------------------------
+Test set: com.subsetsum.model.SubsetSumInputTest
+-------------------------------------------------------------------------------
+Tests run: 11, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.003 s -- in com.subsetsum.model.SubsetSumInputTest

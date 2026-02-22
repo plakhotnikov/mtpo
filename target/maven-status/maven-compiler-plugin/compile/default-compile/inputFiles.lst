@@ -1,0 +1,9 @@
+/Users/admin/Desktop/учеба 6 сем/тестирование/lab1/src/main/java/com/subsetsum/App.java
+/Users/admin/Desktop/учеба 6 сем/тестирование/lab1/src/main/java/com/subsetsum/algorithm/ArrayDPSolver.java
+/Users/admin/Desktop/учеба 6 сем/тестирование/lab1/src/main/java/com/subsetsum/algorithm/HashMapDPSolver.java
+/Users/admin/Desktop/учеба 6 сем/тестирование/lab1/src/main/java/com/subsetsum/algorithm/SubsetSumSolver.java
+/Users/admin/Desktop/учеба 6 сем/тестирование/lab1/src/main/java/com/subsetsum/io/JsonFileReader.java
+/Users/admin/Desktop/учеба 6 сем/тестирование/lab1/src/main/java/com/subsetsum/io/JsonFileWriter.java
+/Users/admin/Desktop/учеба 6 сем/тестирование/lab1/src/main/java/com/subsetsum/model/SubsetSumInput.java
+/Users/admin/Desktop/учеба 6 сем/тестирование/lab1/src/main/java/com/subsetsum/model/SubsetSumResult.java
+/Users/admin/Desktop/учеба 6 сем/тестирование/lab1/src/main/java/com/subsetsum/ui/ConsoleMenu.java
