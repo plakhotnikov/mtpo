@@ -19,7 +19,7 @@ import java.util.List;
 import java.util.Scanner;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -229,5 +229,343 @@ class ConsoleMenuTest {
         assertThat(output, containsString("2."));
         assertThat(output, containsString("3."));
         assertThat(output, containsString("0."));
+        assertThat(output, containsString("Главное меню"));
+        assertThat(output, containsString("Выберите действие:"));
+    }
+
+    @Test
+    @DisplayName("isRunning: true до вызова run, false после выхода")
+    void isRunning_trueBeforeExit() {
+        ConsoleMenu menu = createMenu("0\n");
+        assertTrue(menu.isRunning());
+        menu.run();
+        assertFalse(menu.isRunning());
+    }
+
+    @Test
+    @DisplayName("Отрицательные числа → ArrayDP пропущен")
+    void negativeNumbers_arrayDPSkipped() {
+        when(mockArraySolver.getName()).thenReturn("ArrayDP");
+        when(mockHashMapSolver.solve(any()))
+                .thenReturn(new SubsetSumResult(true, List.of(-1, 5), "HashMapDP"));
+
+        ConsoleMenu menu = createMenu("1\n-1 5 3\n4\nn\n0\n");
+        menu.run();
+
+        verify(mockArraySolver, never()).solve(any());
+        String output = getOutput();
+        assertThat(output, containsString("Пропущен"));
+        assertThat(output, containsString("не поддерживает отрицательные числа"));
+    }
+
+    @Test
+    @DisplayName("Отрицательный target → ArrayDP пропущен")
+    void negativeTarget_arrayDPSkipped() {
+        when(mockArraySolver.getName()).thenReturn("ArrayDP");
+        when(mockHashMapSolver.solve(any()))
+                .thenReturn(new SubsetSumResult(true, List.of(1), "HashMapDP"));
+
+        ConsoleMenu menu = createMenu("1\n1 2 3\n-5\nn\n0\n");
+        menu.run();
+
+        verify(mockArraySolver, never()).solve(any());
+        assertThat(getOutput(), containsString("Пропущен"));
+    }
+
+    @Test
+    @DisplayName("Сравнение: r1 быстрее r2")
+    void comparison_r1Faster() {
+        SubsetSumResult r1 = new SubsetSumResult(true, List.of(1), "ArrayDP");
+        r1.setExecutionTimeNs(100);
+        SubsetSumResult r2 = new SubsetSumResult(true, List.of(1), "HashMapDP");
+        r2.setExecutionTimeNs(500);
+
+        when(mockArraySolver.solve(any())).thenReturn(r1);
+        when(mockHashMapSolver.solve(any())).thenReturn(r2);
+
+        ConsoleMenu menu = createMenu("1\n1\n1\nn\n0\n");
+        menu.run();
+
+        String output = getOutput();
+        assertThat(output, containsString("Сравнение алгоритмов"));
+        assertThat(output, containsString("быстрее: ArrayDP"));
+    }
+
+    @Test
+    @DisplayName("Сравнение: r2 быстрее r1")
+    void comparison_r2Faster() {
+        SubsetSumResult r1 = new SubsetSumResult(true, List.of(1), "ArrayDP");
+        r1.setExecutionTimeNs(500);
+        SubsetSumResult r2 = new SubsetSumResult(true, List.of(1), "HashMapDP");
+        r2.setExecutionTimeNs(100);
+
+        when(mockArraySolver.solve(any())).thenReturn(r1);
+        when(mockHashMapSolver.solve(any())).thenReturn(r2);
+
+        ConsoleMenu menu = createMenu("1\n1\n1\nn\n0\n");
+        menu.run();
+
+        assertThat(getOutput(), containsString("быстрее: HashMapDP"));
+    }
+
+    @Test
+    @DisplayName("Сравнение: одинаковое время")
+    void comparison_equalTimes() {
+        SubsetSumResult r1 = new SubsetSumResult(true, List.of(1), "ArrayDP");
+        r1.setExecutionTimeNs(200);
+        SubsetSumResult r2 = new SubsetSumResult(true, List.of(1), "HashMapDP");
+        r2.setExecutionTimeNs(200);
+
+        when(mockArraySolver.solve(any())).thenReturn(r1);
+        when(mockHashMapSolver.solve(any())).thenReturn(r2);
+
+        ConsoleMenu menu = createMenu("1\n1\n1\nn\n0\n");
+        menu.run();
+
+        assertThat(getOutput(), containsString("одинаково"));
+    }
+
+    @Test
+    @DisplayName("HashMapDP бросает исключение")
+    void hashMapSolverException() {
+        when(mockArraySolver.solve(any()))
+                .thenReturn(new SubsetSumResult(true, List.of(1), "ArrayDP"));
+        when(mockHashMapSolver.getName()).thenReturn("HashMapDP");
+        when(mockHashMapSolver.solve(any()))
+                .thenThrow(new RuntimeException("HashMap error"));
+
+        ConsoleMenu menu = createMenu("1\n1\n1\nn\n0\n");
+        menu.run();
+
+        String output = getOutput();
+        assertThat(output, containsString("[HashMapDP] Ошибка"));
+        assertThat(output, containsString("HashMap error"));
+    }
+
+    @Test
+    @DisplayName("Ошибка записи в файл → сообщение об ошибке")
+    void saveResult_ioException() throws IOException {
+        when(mockArraySolver.solve(any()))
+                .thenReturn(new SubsetSumResult(true, List.of(1), "ArrayDP"));
+        when(mockHashMapSolver.solve(any()))
+                .thenReturn(new SubsetSumResult(true, List.of(1), "HashMapDP"));
+        doThrow(new IOException("disk full")).when(mockWriter).writeToFile(any(), any());
+
+        ConsoleMenu menu = createMenu("1\n1\n1\ny\n/tmp/out.json\n0\n");
+        menu.run();
+
+        assertThat(getOutput(), containsString("Ошибка записи"));
+    }
+
+    @Test
+    @DisplayName("Сохранение по 'yes' (полное слово)")
+    void saveResultWithYes() throws IOException {
+        when(mockArraySolver.solve(any()))
+                .thenReturn(new SubsetSumResult(true, List.of(1), "ArrayDP"));
+        when(mockHashMapSolver.solve(any()))
+                .thenReturn(new SubsetSumResult(true, List.of(1), "HashMapDP"));
+
+        ConsoleMenu menu = createMenu("1\n1\n1\nyes\n/tmp/yes.json\n0\n");
+        menu.run();
+
+        verify(mockWriter).writeToFile(any(SubsetSumResult.class), eq("/tmp/yes.json"));
+        assertThat(getOutput(), containsString("Результат сохранён"));
+    }
+
+    @Test
+    @DisplayName("Оба солвера бросают исключения → сохранение не вызывается")
+    void bothSolversFail_noSave() {
+        when(mockArraySolver.getName()).thenReturn("ArrayDP");
+        when(mockArraySolver.solve(any())).thenThrow(new RuntimeException("err1"));
+        when(mockHashMapSolver.getName()).thenReturn("HashMapDP");
+        when(mockHashMapSolver.solve(any())).thenThrow(new RuntimeException("err2"));
+
+        ConsoleMenu menu = createMenu("1\n1 2 3\n5\ny\n/tmp/out.json\n0\n");
+        menu.run();
+
+        verifyNoInteractions(mockWriter);
+        String output = getOutput();
+        assertThat(output, containsString("[ArrayDP] Ошибка"));
+        assertThat(output, containsString("[HashMapDP] Ошибка"));
+    }
+
+    @Test
+    @DisplayName("printResult: результат найден — полный вывод")
+    void printResult_found_fullOutput() {
+        SubsetSumResult result = new SubsetSumResult(true, List.of(2, 3), "ArrayDP");
+        result.setExecutionTimeNs(1_500_000);
+        result.setMemoryUsedBytes(1024);
+
+        when(mockArraySolver.solve(any())).thenReturn(result);
+        when(mockHashMapSolver.solve(any()))
+                .thenReturn(new SubsetSumResult(true, List.of(2, 3), "HashMapDP"));
+
+        ConsoleMenu menu = createMenu("1\n2 3 5\n5\nn\n0\n");
+        menu.run();
+
+        String output = getOutput();
+        assertThat(output, containsString("--- Результат: ArrayDP ---"));
+        assertThat(output, containsString("Решение найдено: Да"));
+        assertThat(output, containsString("Подмножество:"));
+        assertThat(output, containsString("Сумма подмножества:"));
+        assertThat(output, containsString("Время выполнения:"));
+        assertThat(output, containsString("Использовано памяти:"));
+        assertThat(output, containsString("1024 байт"));
+    }
+
+    @Test
+    @DisplayName("printResult: результат не найден — без подмножества")
+    void printResult_notFound_noSubset() {
+        SubsetSumResult result = new SubsetSumResult(false, List.of(), "ArrayDP");
+
+        when(mockArraySolver.solve(any())).thenReturn(result);
+        when(mockHashMapSolver.solve(any()))
+                .thenReturn(new SubsetSumResult(false, List.of(), "HashMapDP"));
+
+        ConsoleMenu menu = createMenu("1\n1 2 3\n99\nn\n0\n");
+        menu.run();
+
+        String output = getOutput();
+        assertThat(output, containsString("Решение найдено: Нет"));
+        assertThat(output, not(containsString("Подмножество:")));
+        assertThat(output, not(containsString("Сумма подмножества:")));
+    }
+
+    @Test
+    @DisplayName("run() выводит заголовок приложения")
+    void run_displaysHeader() {
+        ConsoleMenu menu = createMenu("0\n");
+        menu.run();
+
+        String output = getOutput();
+        assertThat(output, containsString("=== Subset Sum Solver ==="));
+        assertThat(output, containsString("NP-полной задачи Subset Sum"));
+    }
+
+    @Test
+    @DisplayName("Справка: подробная проверка содержимого")
+    void helpCommand_detailedOutput() {
+        ConsoleMenu menu = createMenu("3\n0\n");
+        menu.run();
+
+        String output = getOutput();
+        assertThat(output, containsString("=== Справка ==="));
+        assertThat(output, containsString("NP-полная задача"));
+        assertThat(output, containsString("подмножество"));
+        assertThat(output, containsString("два алгоритма"));
+        assertThat(output, containsString("ArrayDP"));
+        assertThat(output, containsString("boolean[][]"));
+        assertThat(output, containsString("HashMapDP"));
+        assertThat(output, containsString("HashMap"));
+        assertThat(output, containsString("JSON-файл"));
+        assertThat(output, containsString("Форматы ввода/вывода"));
+    }
+
+    @Test
+    @DisplayName("solveAndDisplay: отображает входные данные")
+    void solveAndDisplay_displaysInput() {
+        when(mockArraySolver.solve(any()))
+                .thenReturn(new SubsetSumResult(true, List.of(5), "ArrayDP"));
+        when(mockHashMapSolver.solve(any()))
+                .thenReturn(new SubsetSumResult(true, List.of(5), "HashMapDP"));
+
+        ConsoleMenu menu = createMenu("1\n5\n5\nn\n0\n");
+        menu.run();
+
+        assertThat(getOutput(), containsString("Входные данные:"));
+    }
+
+    @Test
+    @DisplayName("solveAndDisplay: отображает запрос на сохранение")
+    void solveAndDisplay_displaysPrompt() {
+        when(mockArraySolver.solve(any()))
+                .thenReturn(new SubsetSumResult(true, List.of(5), "ArrayDP"));
+        when(mockHashMapSolver.solve(any()))
+                .thenReturn(new SubsetSumResult(true, List.of(5), "HashMapDP"));
+
+        ConsoleMenu menu = createMenu("1\n5\n5\nn\n0\n");
+        menu.run();
+
+        assertThat(getOutput(), containsString("Сохранить результат в JSON-файл?"));
+    }
+
+    @Test
+    @DisplayName("handleManualInput: отображает подсказки ввода")
+    void handleManualInput_displaysPrompts() {
+        when(mockArraySolver.solve(any()))
+                .thenReturn(new SubsetSumResult(true, List.of(1), "ArrayDP"));
+        when(mockHashMapSolver.solve(any()))
+                .thenReturn(new SubsetSumResult(true, List.of(1), "HashMapDP"));
+
+        ConsoleMenu menu = createMenu("1\n1\n1\nn\n0\n");
+        menu.run();
+
+        String output = getOutput();
+        assertThat(output, containsString("Введите числа через пробел:"));
+        assertThat(output, containsString("Введите целевую сумму:"));
+    }
+
+    @Test
+    @DisplayName("handleFileInput: отображает подсказку пути")
+    void handleFileInput_displaysPrompt() throws IOException {
+        SubsetSumInput fileInput = new SubsetSumInput(List.of(1), 1);
+        when(mockReader.readFromFile(any())).thenReturn(fileInput);
+        when(mockArraySolver.solve(any()))
+                .thenReturn(new SubsetSumResult(true, List.of(1), "ArrayDP"));
+        when(mockHashMapSolver.solve(any()))
+                .thenReturn(new SubsetSumResult(true, List.of(1), "HashMapDP"));
+
+        ConsoleMenu menu = createMenu("2\n/path/f.json\nn\n0\n");
+        menu.run();
+
+        assertThat(getOutput(), containsString("Введите путь к JSON-файлу:"));
+    }
+
+    @Test
+    @DisplayName("Сохранение: запрашивает путь при согласии")
+    void saveResult_asksForPath() throws IOException {
+        when(mockArraySolver.solve(any()))
+                .thenReturn(new SubsetSumResult(true, List.of(1), "ArrayDP"));
+        when(mockHashMapSolver.solve(any()))
+                .thenReturn(new SubsetSumResult(true, List.of(1), "HashMapDP"));
+
+        ConsoleMenu menu = createMenu("1\n1\n1\ny\n/tmp/x.json\n0\n");
+        menu.run();
+
+        assertThat(getOutput(), containsString("Введите путь для сохранения:"));
+    }
+
+    @Test
+    @DisplayName("printComparison: отображает время и память обоих")
+    void comparison_displaysTimingsAndMemory() {
+        SubsetSumResult r1 = new SubsetSumResult(true, List.of(1), "ArrayDP");
+        r1.setExecutionTimeNs(1_000_000);
+        r1.setMemoryUsedBytes(2048);
+        SubsetSumResult r2 = new SubsetSumResult(true, List.of(1), "HashMapDP");
+        r2.setExecutionTimeNs(2_000_000);
+        r2.setMemoryUsedBytes(4096);
+
+        when(mockArraySolver.solve(any())).thenReturn(r1);
+        when(mockHashMapSolver.solve(any())).thenReturn(r2);
+
+        ConsoleMenu menu = createMenu("1\n1\n1\nn\n0\n");
+        menu.run();
+
+        String output = getOutput();
+        assertThat(output, containsString("Сравнение алгоритмов"));
+        assertThat(output, containsString("ArrayDP"));
+        assertThat(output, containsString("HashMapDP"));
+        assertThat(output, containsString("2048"));
+        assertThat(output, containsString("4096"));
+    }
+
+    @Test
+    @DisplayName("Ввод вручную → только цифра 0 → нет решения без подмножества в выводе")
+    void handleChoice_menuOptions() {
+        ConsoleMenu menu = createMenu("0\n");
+        menu.handleChoice("0");
+
+        assertFalse(menu.isRunning());
+        assertThat(getOutput(), containsString("До свидания!"));
     }
 }

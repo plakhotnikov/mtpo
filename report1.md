@@ -40,26 +40,31 @@
 
 ### 2.1. Use-Case диаграмма
 
-```mermaid
-graph LR
-    User((Пользователь))
+```plantuml
+@startuml
+left to right direction
 
-    UC1[Ввести данные вручную]
-    UC2[Загрузить данные из JSON-файла]
-    UC3[Решить задачу Subset Sum]
-    UC4[Сравнить алгоритмы]
-    UC5[Сохранить результат в JSON]
-    UC6[Просмотреть справку]
-    UC7[Выйти из программы]
+actor "Пользователь" as User
 
-    User --> UC1
-    User --> UC2
-    User --> UC6
-    User --> UC7
-    UC1 --> UC3
-    UC2 --> UC3
-    UC3 --> UC4
-    UC3 --> UC5
+rectangle "Subset Sum Solver" {
+    usecase "Ввести данные вручную" as UC1
+    usecase "Загрузить данные из JSON-файла" as UC2
+    usecase "Решить задачу Subset Sum" as UC3
+    usecase "Сравнить алгоритмы" as UC4
+    usecase "Сохранить результат в JSON" as UC5
+    usecase "Просмотреть справку" as UC6
+    usecase "Выйти из программы" as UC7
+}
+
+User --> UC1
+User --> UC2
+User --> UC6
+User --> UC7
+UC1 --> UC3 : <<include>>
+UC2 --> UC3 : <<include>>
+UC3 --> UC4 : <<include>>
+UC3 --> UC5 : <<extend>>
+@enduml
 ```
 
 ### 2.2. Описание случаев использования
@@ -322,65 +327,66 @@ mvn package
 
 ### 5.6. Диаграмма классов тестов
 
-```mermaid
-classDiagram
-    class ArrayDPSolverTest {
-        -ArrayDPSolver solver
-        +BoundaryValueAnalysis
-        +StatementTesting
-        +ParameterizedTests
-        +AssumptionTests
-    }
+```plantuml
+@startuml
+class ArrayDPSolverTest {
+    - solver : ArrayDPSolver
+    + BoundaryValueAnalysis
+    + StatementTesting
+    + ParameterizedTests
+    + AssumptionTests
+}
 
-    class HashMapDPSolverTest {
-        -HashMapDPSolver solver
-        +EquivalencePartitioning
-        +BranchTesting
-        +ParameterizedTests
-    }
+class HashMapDPSolverTest {
+    - solver : HashMapDPSolver
+    + EquivalencePartitioning
+    + BranchTesting
+    + ParameterizedTests
+}
 
-    class SolverComparisonTest {
-        -ArrayDPSolver arraySolver
-        -HashMapDPSolver hashMapSolver
-        +bothSolversAgreeOnResult()
-    }
+class SolverComparisonTest {
+    - arraySolver : ArrayDPSolver
+    - hashMapSolver : HashMapDPSolver
+    + bothSolversAgreeOnResult()
+}
 
-    class JsonFileReaderTest {
-        -ObjectMapper mockObjectMapper
-        -ObjectMapper spyObjectMapper
-        +Mock_tests()
-        +Spy_tests()
-        +InlineMock_tests()
-    }
+class JsonFileReaderTest {
+    - mockObjectMapper : ObjectMapper
+    - spyObjectMapper : ObjectMapper
+    + Mock_tests()
+    + Spy_tests()
+    + InlineMock_tests()
+}
 
-    class JsonFileWriterTest {
-        +writeToFile_success()
-        +writeToStream_success()
-        +mock_objectMapperWriteValueCalled()
-    }
+class JsonFileWriterTest {
+    + writeToFile_success()
+    + writeToStream_success()
+    + mock_objectMapperWriteValueCalled()
+}
 
-    class ConsoleMenuTest {
-        -SubsetSumSolver mockArraySolver
-        -SubsetSumSolver mockHashMapSolver
-        -JsonFileReader mockReader
-        -JsonFileWriter mockWriter
-        +exitCommand()
-        +helpCommand()
-        +manualInput_bothSolversCalled()
-        +fileInput_success()
-    }
+class ConsoleMenuTest {
+    - mockArraySolver : SubsetSumSolver
+    - mockHashMapSolver : SubsetSumSolver
+    - mockReader : JsonFileReader
+    - mockWriter : JsonFileWriter
+    + exitCommand()
+    + helpCommand()
+    + manualInput_bothSolversCalled()
+    + fileInput_success()
+}
 
-    class SubsetSumInputTest {
-        +constructorWithParams()
-        +equalsAndHashCode()
-        +defensiveCopy()
-    }
+class SubsetSumInputTest {
+    + constructorWithParams()
+    + equalsAndHashCode()
+    + defensiveCopy()
+}
 
-    class SubsetSumResultTest {
-        +getSubsetSum()
-        +executionTimeConversion()
-        +equalsAndHashCode()
-    }
+class SubsetSumResultTest {
+    + getSubsetSum()
+    + executionTimeConversion()
+    + equalsAndHashCode()
+}
+@enduml
 ```
 
 ### 5.7. Распределение тестов по тестовым классам
@@ -392,10 +398,10 @@ classDiagram
 | SolverComparisonTest | 11 | Сравнительное тестирование |
 | JsonFileReaderTest | 10 | Мокирование (3 типа) |
 | JsonFileWriterTest | 7 | Мокирование |
-| ConsoleMenuTest | 15 | Интеграционное (моки) |
+| ConsoleMenuTest | 36 | Интеграционное (моки) |
 | SubsetSumInputTest | 11 | Модульное |
 | SubsetSumResultTest | 11 | Модульное |
-| **Итого** | **128** | |
+| **Итого** | **149** | |
 
 ---
 
@@ -403,102 +409,113 @@ classDiagram
 
 ### 6.1. Архитектура
 
-```mermaid
-graph TD
-    App[App.java<br>main] --> ConsoleMenu
-    ConsoleMenu --> SubsetSumSolver["«interface»<br>SubsetSumSolver"]
-    ConsoleMenu --> JsonFileReader
-    ConsoleMenu --> JsonFileWriter
-    SubsetSumSolver --> ArrayDPSolver["ArrayDPSolver<br>boolean[][]"]
-    SubsetSumSolver --> HashMapDPSolver["HashMapDPSolver<br>HashMap"]
-    ArrayDPSolver --> SubsetSumInput
-    ArrayDPSolver --> SubsetSumResult
-    HashMapDPSolver --> SubsetSumInput
-    HashMapDPSolver --> SubsetSumResult
-    JsonFileReader --> SubsetSumInput
-    JsonFileWriter --> SubsetSumResult
+```plantuml
+@startuml
+[App.java\nmain] as App
+[ConsoleMenu] as ConsoleMenu
+interface "SubsetSumSolver" as SubsetSumSolver
+[ArrayDPSolver] as ArrayDPSolver
+[HashMapDPSolver] as HashMapDPSolver
+[JsonFileReader] as JsonFileReader
+[JsonFileWriter] as JsonFileWriter
+[SubsetSumInput] as SubsetSumInput
+[SubsetSumResult] as SubsetSumResult
+
+App --> ConsoleMenu
+ConsoleMenu --> SubsetSumSolver
+ConsoleMenu --> JsonFileReader
+ConsoleMenu --> JsonFileWriter
+SubsetSumSolver <|.. ArrayDPSolver
+SubsetSumSolver <|.. HashMapDPSolver
+ArrayDPSolver --> SubsetSumInput
+ArrayDPSolver --> SubsetSumResult
+HashMapDPSolver --> SubsetSumInput
+HashMapDPSolver --> SubsetSumResult
+JsonFileReader --> SubsetSumInput
+JsonFileWriter --> SubsetSumResult
+@enduml
 ```
 
 ### 6.2. Диаграмма классов
 
-```mermaid
-classDiagram
-    class SubsetSumSolver {
-        <<interface>>
-        +solve(SubsetSumInput input) SubsetSumResult
-        +getName() String
-    }
+```plantuml
+@startuml
+interface SubsetSumSolver <<interface>> {
+    + solve(input : SubsetSumInput) : SubsetSumResult
+    + getName() : String
+}
 
-    class ArrayDPSolver {
-        -NAME: String
-        +solve(input) SubsetSumResult
-        +getName() String
-        -buildResult(found, subset) SubsetSumResult
-    }
+class ArrayDPSolver {
+    - NAME : String
+    + solve(input : SubsetSumInput) : SubsetSumResult
+    + getName() : String
+    - buildResult(found : boolean, subset : List<Integer>) : SubsetSumResult
+}
 
-    class HashMapDPSolver {
-        -NAME: String
-        +solve(input) SubsetSumResult
-        +getName() String
-        -buildResult(found, subset) SubsetSumResult
-    }
+class HashMapDPSolver {
+    - NAME : String
+    + solve(input : SubsetSumInput) : SubsetSumResult
+    + getName() : String
+    - buildResult(found : boolean, subset : List<Integer>) : SubsetSumResult
+}
 
-    class SubsetSumInput {
-        -numbers: List~Integer~
-        -targetSum: int
-        +getNumbers() List~Integer~
-        +getTargetSum() int
-        +size() int
-        +validate()
-    }
+class SubsetSumInput {
+    - numbers : List<Integer>
+    - targetSum : int
+    + getNumbers() : List<Integer>
+    + getTargetSum() : int
+    + size() : int
+    + validate() : void
+}
 
-    class SubsetSumResult {
-        -found: boolean
-        -subset: List~Integer~
-        -executionTimeNs: long
-        -memoryUsedBytes: long
-        -algorithmName: String
-        +isFound() boolean
-        +getSubset() List~Integer~
-        +getSubsetSum() int
-        +getExecutionTimeMs() double
-    }
+class SubsetSumResult {
+    - found : boolean
+    - subset : List<Integer>
+    - executionTimeNs : long
+    - memoryUsedBytes : long
+    - algorithmName : String
+    + isFound() : boolean
+    + getSubset() : List<Integer>
+    + getSubsetSum() : int
+    + getExecutionTimeMs() : double
+}
 
-    class JsonFileReader {
-        -objectMapper: ObjectMapper
-        +readFromFile(path) SubsetSumInput
-        +readFromStream(is) SubsetSumInput
-    }
+class JsonFileReader {
+    - objectMapper : ObjectMapper
+    + readFromFile(path : String) : SubsetSumInput
+    + readFromStream(is : InputStream) : SubsetSumInput
+}
 
-    class JsonFileWriter {
-        -objectMapper: ObjectMapper
-        +writeToFile(result, path)
-        +writeToStream(result, os)
-        +writeToString(result) String
-    }
+class JsonFileWriter {
+    - objectMapper : ObjectMapper
+    + writeToFile(result : SubsetSumResult, path : String) : void
+    + writeToStream(result : SubsetSumResult, os : OutputStream) : void
+    + writeToString(result : SubsetSumResult) : String
+}
 
-    class ConsoleMenu {
-        -scanner: Scanner
-        -out: PrintStream
-        -arraySolver: SubsetSumSolver
-        -hashMapSolver: SubsetSumSolver
-        -jsonReader: JsonFileReader
-        -jsonWriter: JsonFileWriter
-        +run()
-        +handleManualInput()
-        +handleFileInput()
-        +printHelp()
-    }
+class ConsoleMenu {
+    - scanner : Scanner
+    - out : PrintStream
+    - arraySolver : SubsetSumSolver
+    - hashMapSolver : SubsetSumSolver
+    - jsonReader : JsonFileReader
+    - jsonWriter : JsonFileWriter
+    + run() : void
+    + handleManualInput() : void
+    + handleFileInput() : void
+    + printHelp() : void
+}
 
-    SubsetSumSolver <|.. ArrayDPSolver
-    SubsetSumSolver <|.. HashMapDPSolver
-    ArrayDPSolver ..> SubsetSumInput
-    ArrayDPSolver ..> SubsetSumResult
-    HashMapDPSolver ..> SubsetSumInput
-    HashMapDPSolver ..> SubsetSumResult
-    ConsoleMenu --> SubsetSumSolver
-    ConsoleMenu --> JsonFileReader
-    ConsoleMenu --> JsonFileWriter
+SubsetSumSolver <|.. ArrayDPSolver
+SubsetSumSolver <|.. HashMapDPSolver
+ArrayDPSolver ..> SubsetSumInput
+ArrayDPSolver ..> SubsetSumResult
+HashMapDPSolver ..> SubsetSumInput
+HashMapDPSolver ..> SubsetSumResult
+ConsoleMenu --> SubsetSumSolver
+ConsoleMenu --> JsonFileReader
+ConsoleMenu --> JsonFileWriter
+@enduml
 ```
 
 ### 6.3. Пакетная структура
@@ -559,36 +576,36 @@ Pitest использует набор операторов `DEFAULTS`:
 
 | Оператор | Описание | Сгенерировано | Убито | % |
 |----------|----------|:---:|:---:|:---:|
-| ConditionalsBoundary | Замена `<` на `<=`, `>` на `>=` и т.д. | 18 | 8 | 44% |
+| ConditionalsBoundary | Замена `<` на `<=`, `>` на `>=` и т.д. | 18 | 14 | 78% |
 | IncrementsMutator | Замена `++` на `--` и наоборот | 3 | 1 | 33% |
-| NegateConditionals | Инверсия условий (`==` → `!=`, `<` → `>=`) | 43 | 18 | 42% |
-| VoidMethodCalls | Удаление вызовов void-методов | 33 | 12 | 36% |
-| BooleanTrueReturn | Замена `return false` на `return true` | 13 | 8 | 62% |
-| BooleanFalseReturn | Замена `return true` на `return false` | 4 | 2 | 50% |
+| NegateConditionals | Инверсия условий (`==` → `!=`, `<` → `>=`) | 43 | 28 | 65% |
+| VoidMethodCalls | Удаление вызовов void-методов | 33 | 28 | 85% |
+| BooleanTrueReturn | Замена `return false` на `return true` | 13 | 10 | 77% |
+| BooleanFalseReturn | Замена `return true` на `return false` | 4 | 4 | 100% |
 | PrimitiveReturns | Замена примитивных возвратов на 0 | 7 | 5 | 71% |
-| RemoveConditional (ORDER_IF) | Удаление условий (ветвь if) | 24 | 12 | 50% |
-| RemoveConditional (EQUAL_ELSE) | Удаление условий (ветвь else) | 49 | 36 | 73% |
+| RemoveConditional (ORDER_IF) | Удаление условий (ветвь if) | 24 | 18 | 75% |
+| RemoveConditional (EQUAL_ELSE) | Удаление условий (ветвь else) | 49 | 40 | 82% |
 | NullReturns | Замена возврата объекта на null | 8 | 8 | 100% |
 | MathMutator | Замена `+` на `-`, `*` на `/` и т.д. | 20 | 12 | 60% |
 | EmptyObjectReturns | Замена возврата на пустой объект | 10 | 10 | 100% |
 
 ### 7.3. Метрики качества
 
-| Метрика | Значение | Формула |
-|---------|----------|---------|
-| **LCC** (Line Code Coverage) | **95%** (325/342) | Покрытые строки / Все мутированные строки |
-| **MSI** (Mutation Score Indicator) | **58%** (121/210) | Убитые мутации / Все мутации |
-| **MCC** (Mutation Code Coverage) | **95%** (199/210) | Покрытые мутации / Все мутации |
-| **CoveredCodeMSI** | **61%** (121/199) | Убитые мутации / Покрытые мутации |
+| Метрика | До доработки | После доработки | Формула |
+|---------|:---:|:---:|---------|
+| **LCC** (Line Code Coverage) | 95% (325/342) | **97%** (332/342) | Покрытые строки / Все мутированные строки |
+| **MSI** (Mutation Score Indicator) | 58% (121/210) | **77%** (161/210) | Убитые мутации / Все мутации |
+| **MCC** (Mutation Code Coverage) | 95% (199/210) | **97%** (204/210) | Покрытые мутации / Все мутации |
+| **CoveredCodeMSI** | 61% (121/199) | **79%** (161/204) | Убитые мутации / Покрытые мутации |
 
 ### 7.4. Анализ эквивалентных мутаций
 
-**Эквивалентные мутации** — мутации, которые не изменяют наблюдаемое поведение программы. Их невозможно обнаружить тестами.
+**Эквивалентные мутации** — мутации, которые не изменяют наблюдаемое поведение программы. Их невозможно обнаружить тестами, так как мутированная и оригинальная программы семантически эквивалентны.
 
 Примеры обнаруженных эквивалентных мутаций в проекте:
 
-1. **ConditionalsBoundary** в `ArrayDPSolver.solve()`: замена `j >= num` на `j > num` — при `j == num` результат `dp[i-1][0]` всегда `true`, поэтому мутация эквивалентна в некоторых контекстах.
-2. **VoidMethodCalls** в `ConsoleMenu`: удаление вызовов `out.println()` — не влияет на логику, только на вывод.
+1. **ConditionalsBoundary** в `ArrayDPSolver.solve()`: замена `j >= num` на `j > num` — при `j == num` результат `dp[i-1][0]` всегда `true`, поэтому мутация эквивалентна.
+2. **ConditionalsBoundary** в лямбда-выражении `ConsoleMenu.solveAndDisplay()`: замена `n < 0` на `n <= 0` в `anyMatch(n -> n < 0)`. Нулевые значения корректно обрабатываются ArrayDP, поэтому изменение граничного условия не влияет на поведение.
 3. **IncrementsMutator** в циклах с итератором — если изменение инкремента не влияет на завершение цикла.
 
 Наличие эквивалентных мутаций занижает MSI. С учётом эквивалентных мутаций реальный показатель убийства мутаций выше.
@@ -612,16 +629,47 @@ if (j >= num && dp[i - 1][j - num]) {
 
 ### 7.6. Оценка mutation-adequacy
 
-Тесты **не являются полностью mutation-adequate**, так как MSI = 58% < 100%. Основные причины выживших мутаций:
+Тесты **не являются полностью mutation-adequate**, так как MSI = 77% < 100%. Основные причины выживших мутаций:
 
-1. **Классы UI/IO** — мутации в методах вывода (`println`, `printf`) не влияют на возвращаемые значения, и часть из них эквивалентна.
+1. **Эквивалентные мутации** — часть выживших мутаций не изменяет наблюдаемое поведение программы (см. п. 7.4).
 2. **Граничные условия** в DP — часть мутаций создаёт эквивалентные программы.
 3. **Метрики производительности** — изменение кода измерения времени/памяти не проверяется тестами на точные значения.
 
-Для повышения MSI можно:
-- Добавить тесты, проверяющие точные значения строковых выводов в `ConsoleMenu`
-- Добавить тесты на граничные условия цикла в DP-алгоритмах
-- Проверять side-effects (записи в файл, вызовы методов)
+### 7.7. Улучшение качества тестов по результатам мутационного тестирования
+
+По результатам первичного запуска мутационного тестирования (MSI = 58%) был проведён анализ выживших мутаций. Были выявлены основные пробелы в тестовом покрытии класса `ConsoleMenu`:
+
+- Ветвь пропуска ArrayDP при отрицательных числах/target — не тестировалась
+- Все три ветви сравнения времени выполнения (`r1 < r2`, `r2 < r1`, `r1 == r2`) — не тестировались
+- Исключения HashMapDP солвера — не тестировались
+- Ошибки записи в файл (IOException) — не тестировались
+- Состояние `isRunning()` до выхода — не проверялось
+- Большинство вызовов `out.println()` и `out.print()` — не верифицировались
+
+Были разработаны **21 дополнительный тест** для `ConsoleMenuTest`, покрывающие все перечисленные пробелы:
+
+| Категория | Добавленные тесты | Убитые мутации |
+|-----------|:-:|:-:|
+| Отрицательные числа → ArrayDP пропущен | 2 | 4 |
+| Сравнение времени (3 ветви) | 3 | 6 |
+| Исключение HashMapDP | 1 | 2 |
+| Ошибка записи в файл | 1 | 2 |
+| `isRunning()` до/после выхода | 1 | 2 |
+| Полная верификация вывода (`printResult`, `printMenu`, `printHelp`, подсказки) | 10 | 16 |
+| Сохранение по «yes», оба солвера падают | 3 | 8 |
+| **Итого** | **21** | **40** |
+
+В результате доработки:
+
+| Метрика | До | После | Прирост |
+|---------|:---:|:---:|:---:|
+| Количество тестов | 128 | 149 | +21 |
+| MSI | 58% | **77%** | +19 п.п. |
+| Test Strength | 61% | **79%** | +18 п.п. |
+| Line Coverage | 95% | **97%** | +2 п.п. |
+| Убито мутаций | 121 | **161** | +40 |
+
+Таким образом, мутационное тестирование позволило **существенно улучшить качество тестового набора**, выявив конкретные непокрытые ветви и неверифицированные выходные данные.
 
 ---
 
@@ -635,9 +683,11 @@ if (j >= num && dp[i - 1][j - num]) {
 
 ### 8.2. Результаты проектирования тестов
 
-Спроектировано **128 модульных тестов** по 4 техникам:
+Спроектировано **149 модульных тестов** по 4 техникам:
 - Спецификационные: BVA (10 тестов), EP (10 тестов)
 - Структурные: Statement Testing (9 тестов), Branch Testing (10 тестов)
+
+Дополнительно по результатам мутационного тестирования были разработаны 21 тест для `ConsoleMenu`, что позволило повысить MSI с 58% до 77%.
 
 Сравнительный анализ показал, что спецификационные техники (BVA, EP) эффективны для выявления дефектов без доступа к коду, а структурные (Statement, Branch) обеспечивают полное покрытие внутренней логики.
 
@@ -658,21 +708,21 @@ if (j >= num && dp[i - 1][j - num]) {
 
 | Метрика | Значение |
 |---------|----------|
-| Общее количество тестов | 128 |
+| Общее количество тестов | 149 |
 | Методов утверждений | 7 (assertEquals, assertTrue, assertFalse, assertNotNull, assertThrows, assertDoesNotThrow, assertNotEquals) |
 | Методов предположений | 2 (assumeTrue, assumingThat) |
 | Видов мокирования | 3 (@Mock, @Spy, mock()) |
 | Типов параметризации | 2 (@CsvSource, @MethodSource) |
 | Типов матчеров Hamcrest | 9+ (contains, hasSize, empty, containsString, greaterThan, equalTo, not, is, greaterThanOrEqualTo) |
-| Line Coverage | 95% |
-| MSI (Pitest) | 58% |
-| CoveredCodeMSI | 61% |
+| Line Coverage | 97% |
+| MSI (Pitest) | 77% |
+| CoveredCodeMSI | 79% |
 
 ### 8.5. Преимущества и недостатки TDD
 
 **Преимущества TDD в контексте данной работы:**
 - Тесты выступали спецификацией поведения перед написанием кода
-- Рефакторинг проводился с уверенностью в корректности (128 тестов как страховочная сеть)
+- Рефакторинг проводился с уверенностью в корректности (149 тестов как страховочная сеть)
 - Архитектура получилась модульной и тестируемой (интерфейс `SubsetSumSolver`, инъекция зависимостей в `ConsoleMenu`)
 
 **Недостатки TDD:**

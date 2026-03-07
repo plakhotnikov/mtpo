@@ -4,6 +4,6 @@
   "executionTimeNs" : 0,
   "memoryUsedBytes" : 0,
   "algorithmName" : "A",
-  "subsetSum" : 1,
-  "executionTimeMs" : 0.0
+  "executionTimeMs" : 0.0,
+  "subsetSum" : 1
 }

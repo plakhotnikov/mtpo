@@ -1,0 +1,24 @@
+@startuml
+[App.java\nmain] as App
+[ConsoleMenu] as ConsoleMenu
+interface "SubsetSumSolver" as SubsetSumSolver
+[ArrayDPSolver] as ArrayDPSolver
+[HashMapDPSolver] as HashMapDPSolver
+[JsonFileReader] as JsonFileReader
+[JsonFileWriter] as JsonFileWriter
+[SubsetSumInput] as SubsetSumInput
+[SubsetSumResult] as SubsetSumResult
+
+App --> ConsoleMenu
+ConsoleMenu --> SubsetSumSolver
+ConsoleMenu --> JsonFileReader
+ConsoleMenu --> JsonFileWriter
+SubsetSumSolver <|.. ArrayDPSolver
+SubsetSumSolver <|.. HashMapDPSolver
+ArrayDPSolver --> SubsetSumInput
+ArrayDPSolver --> SubsetSumResult
+HashMapDPSolver --> SubsetSumInput
+HashMapDPSolver --> SubsetSumResult
+JsonFileReader --> SubsetSumInput
+JsonFileWriter --> SubsetSumResult
+@enduml

@@ -5,7 +5,8 @@
       "Bash(java:*)",
       "Bash(cd \"/Users/admin/Desktop/учеба 6 сем/тестирование/lab1\" && mvn -version 2>&1)",
       "Bash(grep bytebuddy:*)",
-      "Bash(tail:*)"
+      "Bash(tail:*)",
+      "Bash(grep:*)"
     ]
   }
 }
