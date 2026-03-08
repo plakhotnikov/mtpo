@@ -16,7 +16,7 @@ Feature: Interactive console menu for solving the Subset Sum problem
     Then the output contains "Результат"
     And the output contains "ArrayDP"
     And the output contains "HashMapDP"
-    But the output does not contain "Ошибка"
+    And the output does not contain "Ошибка"
 
   # Declarative style — describing the result without implementation details
   Scenario: Solving a problem with both algorithm results displayed (declarative style)

@@ -78,7 +78,7 @@ public class ConsoleMenuSteps {
                 "Output does not contain '" + expected + "'.\nOutput:\n" + capturedOutput);
     }
 
-    @But("the output does not contain {string}")
+    @And("the output does not contain {string}")
     public void theOutputDoesNotContain(String unexpected) {
         assertFalse(capturedOutput.contains(unexpected),
                 "Output unexpectedly contains '" + unexpected + "'");

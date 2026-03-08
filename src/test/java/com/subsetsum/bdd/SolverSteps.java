@@ -7,7 +7,11 @@ import com.subsetsum.model.SubsetSumInput;
 import com.subsetsum.model.SubsetSumResult;
 
 import io.cucumber.datatable.DataTable;
-import io.cucumber.java.en.*;
+import io.cucumber.java.en.And;
+import io.cucumber.java.en.But;
+import io.cucumber.java.en.Given;
+import io.cucumber.java.en.Then;
+import io.cucumber.java.en.When;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -82,6 +86,14 @@ public class SolverSteps {
         int actualSum = result.getSubset().stream().mapToInt(Integer::intValue).sum();
         assertEquals(expectedSum, actualSum,
                 "Subset " + result.getSubset() + " sum does not equal " + expectedSum);
+    }
+
+    @But("the found subset size is less than {int}")
+    public void theFoundSubsetSizeIsLessThan(int maxSize) {
+        assertNotNull(result.getSubset());
+        assertTrue(result.getSubset().size() < maxSize,
+                "Expected subset size < " + maxSize + " but got " + result.getSubset().size()
+                        + ": " + result.getSubset());
     }
 
     @And("the found subset is empty")

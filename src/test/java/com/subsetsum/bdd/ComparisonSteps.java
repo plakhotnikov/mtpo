@@ -21,16 +21,17 @@ public class ComparisonSteps {
 
     private final SubsetSumSolver arraySolver = new ArrayDPSolver();
     private final SubsetSumSolver hashMapSolver = new HashMapDPSolver();
-    private SubsetSumInput generatedInput;
-    private SubsetSumResult arrayResult;
-    private SubsetSumResult hashMapResult;
-    private String datasetName;
+    private final TestContext ctx = TestContext.get();
 
     private static final StringBuilder performanceLog = new StringBuilder();
 
+    private long generationTimeNs;
+
     @Given("a generated dataset {string} of {int} non-negative numbers in range [{int}, {int}]")
     public void aGeneratedDataset(String name, int size, int min, int max) {
-        this.datasetName = name;
+        ctx.setDatasetName(name);
+
+        long start = System.nanoTime();
         Random random = new Random(42); // Fixed seed for reproducibility
         List<Integer> numbers = new ArrayList<>();
         for (int i = 0; i < size; i++) {
@@ -38,45 +39,50 @@ public class ComparisonSteps {
         }
         int totalSum = numbers.stream().mapToInt(Integer::intValue).sum();
         int targetSum = totalSum / 2;
-        generatedInput = new SubsetSumInput(numbers, targetSum);
+        SubsetSumInput input = new SubsetSumInput(numbers, targetSum);
+        generationTimeNs = System.nanoTime() - start;
 
+        ctx.setGeneratedInput(input);
         saveDataset(name, numbers, targetSum);
     }
 
     @When("both algorithms solve the problem")
     public void bothAlgorithmsSolveTheProblem() {
-        arrayResult = arraySolver.solve(generatedInput);
-        hashMapResult = hashMapSolver.solve(generatedInput);
+        SubsetSumInput input = ctx.getGeneratedInput();
+        ctx.setArrayResult(arraySolver.solve(input));
+        ctx.setHashMapResult(hashMapSolver.solve(input));
     }
 
     @Then("both algorithms agree on found or not-found result")
     public void bothAlgorithmsAgreeOnResult() {
+        SubsetSumResult arrayResult = ctx.getArrayResult();
+        SubsetSumResult hashMapResult = ctx.getHashMapResult();
         assertEquals(arrayResult.isFound(), hashMapResult.isFound(),
                 String.format("Mismatch: ArrayDP=%s, HashMapDP=%s (dataset %s)",
-                        arrayResult.isFound(), hashMapResult.isFound(), datasetName));
+                        arrayResult.isFound(), hashMapResult.isFound(), ctx.getDatasetName()));
     }
 
     @Then("time and memory of both algorithms are measured")
     public void timeAndMemoryOfBothAlgorithmsAreMeasured() {
+        SubsetSumResult arrayResult = ctx.getArrayResult();
+        SubsetSumResult hashMapResult = ctx.getHashMapResult();
+        SubsetSumInput input = ctx.getGeneratedInput();
+        String datasetName = ctx.getDatasetName();
+
         assertNotNull(arrayResult);
         assertNotNull(hashMapResult);
 
         String logEntry = String.format(
                 "| %-20s | %6d | %12.2f | %12.2f | %10d | %10d | %8s | %8s |%n",
-                datasetName,
-                generatedInput.getNumbers().size(),
-                arrayResult.getExecutionTimeMs(),
-                hashMapResult.getExecutionTimeMs(),
-                arrayResult.getMemoryUsedBytes(),
-                hashMapResult.getMemoryUsedBytes(),
-                arrayResult.isFound(),
-                hashMapResult.isFound()
-        );
+                datasetName, input.getNumbers().size(),
+                arrayResult.getExecutionTimeMs(), hashMapResult.getExecutionTimeMs(),
+                arrayResult.getMemoryUsedBytes(), hashMapResult.getMemoryUsedBytes(),
+                arrayResult.isFound(), hashMapResult.isFound());
         performanceLog.append(logEntry);
 
         System.out.println("=== Performance results: " + datasetName + " ===");
-        System.out.printf("  Dataset size: %d%n", generatedInput.getNumbers().size());
-        System.out.printf("  Target sum: %d%n", generatedInput.getTargetSum());
+        System.out.printf("  Dataset size: %d%n", input.getNumbers().size());
+        System.out.printf("  Target sum: %d%n", input.getTargetSum());
         System.out.printf("  ArrayDP:   time=%.2f ms, memory=%d bytes, found=%s%n",
                 arrayResult.getExecutionTimeMs(), arrayResult.getMemoryUsedBytes(), arrayResult.isFound());
         System.out.printf("  HashMapDP: time=%.2f ms, memory=%d bytes, found=%s%n",
@@ -90,12 +96,18 @@ public class ComparisonSteps {
 
     @And("each algorithm completes within {int} milliseconds")
     public void eachAlgorithmCompletesWithinMilliseconds(int maxMs) {
+        SubsetSumResult arrayResult = ctx.getArrayResult();
+        SubsetSumResult hashMapResult = ctx.getHashMapResult();
         assertTrue(arrayResult.getExecutionTimeMs() < maxMs,
                 String.format("ArrayDP exceeded limit: %.2f ms > %d ms",
                         arrayResult.getExecutionTimeMs(), maxMs));
         assertTrue(hashMapResult.getExecutionTimeMs() < maxMs,
                 String.format("HashMapDP exceeded limit: %.2f ms > %d ms",
                         hashMapResult.getExecutionTimeMs(), maxMs));
+    }
+
+    public long getGenerationTimeNs() {
+        return generationTimeNs;
     }
 
     public static String getPerformanceLog() {

@@ -14,6 +14,7 @@ Feature: Solving Subset Sum problem with ArrayDP algorithm
       When the solver runs
       Then the result should be "found"
       And the subset sum equals 11
+      But the found subset size is less than 5
 
     Scenario: Subset does not exist
       Given the input numbers are "5, 10, 15"
