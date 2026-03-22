@@ -15,6 +15,7 @@ mvn test -Dtest=ArrayDPSolverTest          # Single test class
 mvn test -Dtest=ArrayDPSolverTest#targetSumZero_alwaysFound  # Single method
 mvn test-compile org.pitest:pitest-maven:mutationCoverage    # Mutation testing
 mvn package                    # Build JAR
+mvn test -Pfuzz -Dtest="ArrayDPSolverFuzzTest#fuzzArrayDPSolver"  # Fuzz testing (excludes BDD)
 ```
 
 ## Architecture

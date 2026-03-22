@@ -8,5 +8,8 @@ target/
 # Local assistant config
 .claude/
 
+# Jazzer fuzz corpus
+.cifuzz-corpus/
+
 # OS files
 .DS_Store
