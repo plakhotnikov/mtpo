@@ -24,6 +24,8 @@
         <hamcrest.version>2.2</hamcrest.version>
         <pitest.version>1.15.8</pitest.version>
         <cucumber.version>7.15.0</cucumber.version>
+        <spotbugs.version>4.8.4.0</spotbugs.version>
+        <jazzer.version>0.22.1</jazzer.version>
     </properties>
 
     <dependencies>
@@ -97,6 +99,30 @@
             <version>1.10.2</version>
             <scope>test</scope>
         </dependency>
+
+        <!-- Jazzer for fuzz testing -->
+        <dependency>
+            <groupId>com.code-intelligence</groupId>
+            <artifactId>jazzer-junit</artifactId>
+            <version>${jazzer.version}</version>
+            <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.junit.platform</groupId>
+                    <artifactId>junit-platform-commons</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.junit.platform</groupId>
+                    <artifactId>junit-platform-launcher</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.platform</groupId>
+            <artifactId>junit-platform-launcher</artifactId>
+            <version>1.10.2</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
@@ -115,6 +141,11 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>3.2.5</version>
+                <configuration>
+                    <excludes>
+                        <exclude>**/fuzz/**</exclude>
+                    </excludes>
+                </configuration>
             </plugin>
 
             <plugin>
@@ -127,6 +158,20 @@
                             <mainClass>com.subsetsum.App</mainClass>
                         </manifest>
                     </archive>
+                </configuration>
+            </plugin>
+
+            <!-- SpotBugs for static analysis -->
+            <plugin>
+                <groupId>com.github.spotbugs</groupId>
+                <artifactId>spotbugs-maven-plugin</artifactId>
+                <version>${spotbugs.version}</version>
+                <configuration>
+                    <effort>Max</effort>
+                    <threshold>Low</threshold>
+                    <xmlOutput>true</xmlOutput>
+                    <htmlOutput>true</htmlOutput>
+                    <outputDirectory>${project.build.directory}/spotbugs</outputDirectory>
                 </configuration>
             </plugin>
 
@@ -163,6 +208,38 @@
     </build>
 
     <profiles>
+        <profile>
+            <id>fuzz</id>
+            <properties>
+                <surefire.excludes>**/bdd/**</surefire.excludes>
+            </properties>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <version>3.2.5</version>
+                        <configuration>
+                            <argLine>-Xmx4g</argLine>
+                            <excludes>
+                                <exclude>**/bdd/**</exclude>
+                                <exclude>**/RunCucumberTest.java</exclude>
+                            </excludes>
+                            <properties>
+                                <configurationParameters>
+                                    cucumber.plugin=
+                                    cucumber.execution.dry-run=true
+                                    junit.jupiter.extensions.autodetection.enabled=false
+                                </configurationParameters>
+                            </properties>
+                            <classpathDependencyExcludes>
+                                <classpathDependencyExclude>io.cucumber:cucumber-junit-platform-engine</classpathDependencyExclude>
+                            </classpathDependencyExcludes>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
         <profile>
             <id>heavy</id>
             <build>
